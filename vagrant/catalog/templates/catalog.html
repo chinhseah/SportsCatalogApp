@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-6">
+	<h2>Categories</h2>
+	{% for category in categories %}
+		<br><br>
+		<a href="{{url_for('show_category_items', category = category.name)}}">{{category.name}}</a>
+	{% endfor %}
+</div>
+<div class="col-md-6">
+	<div class="content-section">
+		{% if categoryTotal %}
+			<h2>{{categoryName}} Items <i style="color:blue">({{categoryTotal}})</i></h2>
+		{% else %}
+			<h2>Latest Items</h2>
+		{% endif %}
+		{% for item in latestItems %}
+			<br><br>
+			<a href="{{url_for('show_category_item', category = item.category, item = item.item)}}">{{item.item}}</a>
+			{% if not categoryName %}
+				&nbsp;<i style="color:grey">({{item.category}})</i>
+			{% endif %}
+		{% endfor %}
+	</div>
+</div>
+{% endblock content %}
