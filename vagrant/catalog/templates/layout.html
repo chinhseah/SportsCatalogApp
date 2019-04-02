@@ -30,7 +30,11 @@
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav navbar-right">
-              <a class="nav-item nav-link" href="/login">Login</a>
+              {%if 'username' not in session %}
+              <a class="nav-item nav-link" href="{{url_for('showLogin')}}">Login</a>
+              {% else %}
+              <a class="nav-item nav-link" href="{{url_for('disconnect')}}">Logout</a>
+              {% endif %}
             </div>
           </div>
         </div>

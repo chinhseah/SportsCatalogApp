@@ -35,3 +35,13 @@ a {
   border-radius: 3px;
   margin-bottom: 20px;
 }
+
+.content-section a.crud:link {
+  color: #331b9e;
+}
+
+
+.auth-provider {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 300;
+}

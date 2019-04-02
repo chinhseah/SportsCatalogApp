@@ -15,6 +15,10 @@
 		{% else %}
 			<h2>Latest Items</h2>
 		{% endif %}
+		{%if 'username' in session %}
+			<br>
+			<a class="crud" href="#">Add Item</a>
+		{% endif %}
 		{% for item in latestItems %}
 			<br><br>
 			<a href="{{url_for('show_category_item', category = item.category, item = item.item)}}">{{item.item}}</a>
