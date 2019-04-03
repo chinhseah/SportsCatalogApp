@@ -36,8 +36,9 @@ a {
   margin-bottom: 20px;
 }
 
-.content-section a.crud:link {
+.crud {
   color: #331b9e;
+  font-style: italic;
 }
 
 

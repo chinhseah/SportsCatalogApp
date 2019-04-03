@@ -91,6 +91,49 @@ def show_category_item(category, item):
         itemDescription = itemObj.description
     return render_template('itemdetails.html', categoryName=category, itemName=item, itemDescription=itemDescription)
 
+@app.route('/catalog/new', methods=['GET','POST'])
+def new_category_item():
+    """
+    Create a new category item into Catalog
+    """
+    if 'username' not in login_session:
+        return redirect('/login')
+    if request.method == 'POST':
+        newItem = CategoryItem(
+            name=request.form['name'],
+            description=request.form['description'],
+            user_id=login_session['user_id'],
+            category_id=request.form['category'])
+        session.add(newItem)
+        flash('New Item %s Successfully Added.' % newItem.name)
+        session.commit()
+        return redirect(url_for('show_catalog'))
+    else:
+        categories = get_categories()
+        return render_template('newitem.html', categories=categories)
+
+@app.route('/catalog/<category>/items/new', methods=['GET','POST'])
+def add_category_item(category):
+    """
+    Add a new category item into Catalog
+    """
+    if 'username' not in login_session:
+        return redirect('/login')
+    if request.method == 'POST':
+        catId = get_category_id(category)
+        newItem = CategoryItem(
+            name=request.form['name'],
+            description=request.form['description'],
+            user_id=login_session['user_id'],
+            category_id=catId)
+        session.add(newItem)
+        flash('New Item %s Successfully Added.' % newItem.name)
+        session.commit()
+        return redirect(url_for('show_catalog'))
+    else:
+        categories = get_categories()
+        return render_template('newcategoryitem.html', categoryName=category, categories=categories)
+
 @app.route('/login')
 def showLogin():
     """
@@ -303,7 +346,7 @@ def get_latest_items(itemLimit):
 
     for c, ci in session.query(Category, CategoryItem).\
         filter(Category.id == CategoryItem.category_id).\
-        order_by(CategoryItem.create_date)[0:itemLimit]:
+        order_by(CategoryItem.create_date.desc())[0:itemLimit]:
         newItem = CatItem(ci.id, c.name, ci.name)
         items.append(newItem)
 

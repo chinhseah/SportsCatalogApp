@@ -17,7 +17,11 @@
 		{% endif %}
 		{%if 'username' in session %}
 			<br>
-			<a class="crud" href="#">Add Item</a>
+			{% if categoryName %}
+			<a class="crud" href="{{url_for('add_category_item', category = categoryName)}}">Add Item</a>
+			{% else %}
+			<a class="crud" href="{{url_for('new_category_item')}}">Add Item</a>
+			{% endif %}
 		{% endif %}
 		{% for item in latestItems %}
 			<br><br>

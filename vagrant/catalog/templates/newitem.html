@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-12">
+	<div class="content-section">
+    <h2>New Item</h2>
+    <form class="newItem" action="{{url_for('new_category_item')}}" method="post">
+      <p>Name:</p>
+      <input type ='text' size='30' name='name'>
+      <p>Description:</p>
+      <textarea name="description" rows="5" cols="30">Describe the item.</textarea>
+      <p>Category:</p>
+      <select name="category">
+        {% for category in categories %}
+        <option value={{category.id}}>{{category.name}}</option>
+        {% endfor %}
+      </select>
+			<br><br>
+      <input type='submit' value='Add'>
+      <a href = '{{url_for('show_catalog')}}'> Cancel </a>
+    </form>
+  </div>
+</div>
+{% endblock content %}
