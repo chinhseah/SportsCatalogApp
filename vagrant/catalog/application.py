@@ -32,6 +32,8 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+categories = session.query(Category).all()
+
 class CatItem():
     def __init__(self, id, category, item):
         self.id = id
@@ -47,7 +49,6 @@ def show_catalog():
     """
     Display list of categories and latest category items.
     """
-    categories = get_categories()
     numberOfCategories = len(categories)
     latestItems = get_latest_items(numberOfCategories)
     return render_template('index.html', categories=categories, latestItems=latestItems)
@@ -57,7 +58,6 @@ def show_category_items(category):
     """
     Display list of categories and items for selected category.
     """
-    categories = get_categories()
     catId = get_category_id(category)
     itemsCount = 0
     items = []
@@ -75,21 +75,67 @@ def show_category_items(category):
         categoryTotal = "1 item"
     else:
         categoryTotal = "%d items" % (itemsCount)
-    return render_template('index.html', categoryName=category, categories=categories, categoryTotal=categoryTotal, latestItems=items)
+    return render_template('index.html',
+                            categoryName=category,
+                            categories=categories,
+                            categoryTotal=categoryTotal,
+                            latestItems=items)
 
-@app.route('/catalog/<category>/items/<item>')
+@app.route('/catalog/<category>/<item>')
 def show_category_item(category, item):
     """
     Display item description
     """
-    itemId = get_item_id(item)
-    if itemId is None:
-        flash("Item %s not found!" % (item))
-        itemDescription = "Not found."
+    authorized = False
+    catId = get_category_id(category)
+    if catId is None:
+        flash("Category %s not found!" % (category))
+        return redirect(url_for('show_catalog'))
     else:
-        itemObj = get_category_item(itemId)
-        itemDescription = itemObj.description
-    return render_template('itemdetails.html', categoryName=category, itemName=item, itemDescription=itemDescription)
+        itemId = get_item_id(catId, item)
+        if itemId is None:
+            flash("Item %s not found!" % (item))
+            itemObj = CategoryItem(name=item,description="Unknown.")
+        else:
+            itemObj = get_category_item(itemId)
+            # If user was original creator then authorized to edit or delete
+            if 'username' in login_session and login_session['user_id'] == itemObj.user_id:
+                authorized = True
+    return render_template('itemdetails.html',
+                            categoryName=category,
+                            item=itemObj,
+                            authorized=authorized)
+
+@app.route('/catalog/<category>/<item>/delete', methods=['GET','POST'])
+def delete_category_item(category, item):
+    """
+    Delete a category item
+    """
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    catId = get_category_id(category)
+    if catId is None:
+        flash("Category %s not found!" % (category))
+        return redirect(url_for('show_catalog'))
+    else:
+        itemId = get_item_id(catId, item)
+        if itemId is None:
+            flash("Item %s not found!" % (item))
+            return redirect(url_for('show_catalog'))
+        else:
+            itemToDelete = get_category_item(itemId)
+            if itemToDelete.user_id != login_session['user_id']:
+                return "<script>function myFunction() \
+                        {alert('You are not authorized to delete this item. Please select your own item to delete.');}\
+                        </script><body onload='myFunction()'>"
+            if request.method == 'POST':
+                session.delete(itemToDelete)
+                flash('%s Successfully Deleted' % itemToDelete.name)
+                session.commit()
+                return redirect(url_for('show_category_items', category=category))
+            else:
+                return render_template('itemdelete.html', categoryName=category, item=itemToDelete)
 
 @app.route('/catalog/new', methods=['GET','POST'])
 def new_category_item():
@@ -104,12 +150,12 @@ def new_category_item():
             description=request.form['description'],
             user_id=login_session['user_id'],
             category_id=request.form['category'])
+        #print("New Item: %s %s %s %s"%(newItem.name, newItem.description, str(newItem.user_id), str(newItem.category_id)))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
         return redirect(url_for('show_catalog'))
     else:
-        categories = get_categories()
         return render_template('newitem.html', categories=categories)
 
 @app.route('/catalog/<category>/items/new', methods=['GET','POST'])
@@ -126,13 +172,55 @@ def add_category_item(category):
             description=request.form['description'],
             user_id=login_session['user_id'],
             category_id=catId)
+        #print("New Item: %s %s %s %s"%(newItem.name, newItem.description, str(newItem.user_id), str(newItem.category_id)))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
+        return redirect(url_for('show_category_items', category=category))
+    else:
+        return render_template('newcategoryitem.html',
+                                categoryName=category,
+                                categories=categories)
+
+@app.route('/catalog/<category>/<item>/edit', methods=['GET','POST'])
+def edit_category_item(category, item):
+    """
+    Edit a category item
+    """
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    catId = get_category_id(category)
+    if catId is None:
+        flash("Category %s not found!" % (category))
         return redirect(url_for('show_catalog'))
     else:
-        categories = get_categories()
-        return render_template('newcategoryitem.html', categoryName=category, categories=categories)
+        itemId = get_item_id(catId, item)
+        if itemId is None:
+            flash("Item %s not found!" % (item))
+            return redirect(url_for('show_category_items', category=category))
+        else:
+            itemToEdit = get_category_item(itemId)
+            if itemToEdit.user_id != login_session['user_id']:
+                return "<script>function myFunction() \
+                        {alert('You are not authorized to edit this item. Please select your own item to edit.');}\
+                        </script><body onload='myFunction()'>"
+            if request.method == 'POST':
+                itemToEdit.name=request.form['name']
+                itemToEdit.description=request.form['description']
+                itemToEdit.category_id=request.form['category']
+                print("itemToEdit %s %s %s %s"%(itemToEdit.name, itemToEdit.description, str(itemToEdit.user_id), str(itemToEdit.category_id)))
+                session.add(itemToEdit)
+                session.commit()
+                flash('Item Successfully Edited.')
+                if itemToEdit.category_id != catId:
+                    flash('Item Category Changed.')
+                return redirect(url_for('show_category_items', category=category))
+            else:
+                return render_template('edititem.html',
+                                        categoryName=category,
+                                        categories=categories,
+                                        item=itemToEdit)
 
 @app.route('/login')
 def showLogin():
@@ -303,24 +391,22 @@ def disconnect():
         flash("You were not logged in")
         return redirect(url_for('show_catalog'))
 
-def get_categories():
-    """
-    Get list of categories.
-    """
-    return session.query(Category).all()
-
 def get_category_id(name):
     """
     Get category identifier by its name.
     """
     cat = session.query(Category).filter_by(name = name).first()
+    if cat is None:
+        return None
     return cat.id
 
 def get_category_items(categoryId):
     """
     Get category items by its identifier.
     """
-    return session.query(CategoryItem).filter_by(category_id = categoryId).all()
+    return session.query(CategoryItem).\
+        filter_by(category_id = categoryId).\
+        order_by(CategoryItem.name).all()
 
 def get_category_item(itemId):
     """
@@ -328,11 +414,11 @@ def get_category_item(itemId):
     """
     return session.query(CategoryItem).filter_by(id = itemId).first()
 
-def get_item_id(name):
+def get_item_id(categoryId, name):
     """
     Get item identifier by its name.
     """
-    item = session.query(CategoryItem).filter_by(name = name).first()
+    item = session.query(CategoryItem).filter_by(name = name).filter_by(category_id = categoryId).first()
     if item is None:
         return None
     return item.id
