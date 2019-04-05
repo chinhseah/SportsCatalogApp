@@ -28,7 +28,16 @@ Udacity Full Stack Web Developer Project to build an app for maintaining items f
   * Open web browser and use web address localhost:8000
   * Login using your Google account
   
-7. End points to get JSON data are:
+## API End Points
+1. localhost:8000/catalog.json
+2. localhost:8000/categories.json
+3. localhost:8000/5/items.json - where 5 is category identifier
+
+## Example Screens
+![Catalog App](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App.png)
+|[Catalog App Category Items](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Category%20Items.png)
+![Catalog App New Item](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20New%20Item.png)
+![Catalog App Item Details](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Item%20Details.png)
 
 ## Dependencies
 * Python 2.7
