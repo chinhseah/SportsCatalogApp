@@ -36,8 +36,8 @@ class Category(Base):
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
-            'name': self.name,
-            'id': self.id,
+            'category': self.name,
+            'category_id': self.id,
         }
 
 class CategoryItem(Base):
@@ -56,12 +56,27 @@ class CategoryItem(Base):
         """Return object data in easily serializeable format"""
         return {
             'name': self.name,
-            'id': self.id,
+            'item_id': self.id,
             'description': self.description,
-            'category_id': self.category_id,
-            'user_id': self.user_id,
         }
 
+class CatItem():
+    def __init__(self, id, category, item):
+        self.id = id
+        self.category = category
+        self.item = item
+
+    def __str__(self):
+        return "Id: %s Category: %s Name: %s" % (self.id, self.category, self.item)
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'id': self.id,
+            'item': self.item,
+            'category': self.category,
+        }
 
 engine = create_engine('sqlite:///catalog.db')
 

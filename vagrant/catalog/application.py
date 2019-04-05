@@ -9,7 +9,7 @@ Student: Chin H. Seah
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from model import Base, Category, CategoryItem, User
+from model import Base, Category, CategoryItem, User, CatItem
 from flask import session as login_session
 import random
 import string
@@ -34,15 +34,6 @@ session = DBSession()
 
 categories = session.query(Category).all()
 
-class CatItem():
-    def __init__(self, id, category, item):
-        self.id = id
-        self.category = category
-        self.item = item
-
-    def __str__(self):
-        return "Id: %s Category: %s Name: %s" % (self.id, self.category, self.item)
-
 @app.route('/')
 @app.route('/catalog')
 def show_catalog():
@@ -52,6 +43,25 @@ def show_catalog():
     numberOfCategories = len(categories)
     latestItems = get_latest_items(numberOfCategories)
     return render_template('index.html', categories=categories, latestItems=latestItems)
+
+@app.route('/catalog.json')
+def catalog_json():
+    catalog = [c.serialize for c in categories]
+    for cat in catalog:
+        catItems = get_category_items(cat["category_id"])
+        items = [ci.serialize for ci in catItems]
+        if len(items) > 0:
+            cat["Item"] = items
+    return jsonify(Category=catalog)
+
+@app.route('/catalog/categories.json')
+def catagories_json():
+    return jsonify(Category=[c.serialize for c in categories])
+
+@app.route('/catalog/<int:category_id>/items.json')
+def catagory_item_json(category_id):
+    catItems = get_category_items(category_id)
+    return jsonify(Item=[ci.serialize for ci in catItems])
 
 @app.route('/catalog/<category>/items')
 def show_category_items(category):
@@ -309,9 +319,9 @@ def gconnect():
     login_session['provider'] = 'google'
 
     # see if user exists, if it doesn't make a new one
-    user_id = getUserID(data["email"])
+    user_id = get_user_id(data["email"])
     if not user_id:
-        user_id = createUser(login_session)
+        user_id = create_user(login_session)
     login_session['user_id'] = user_id
 
     output = ''
@@ -326,7 +336,7 @@ def gconnect():
     return output
 
 # User Helper Functions
-def createUser(login_session):
+def create_user(login_session):
     newUser = User(name=login_session['username'], email=login_session[
                    'email'], picture=login_session['picture'])
     session.add(newUser)
@@ -335,12 +345,12 @@ def createUser(login_session):
     return user.id
 
 
-def getUserInfo(user_id):
+def get_user_info(user_id):
     user = session.query(User).filter_by(id=user_id).one()
     return user
 
 
-def getUserID(email):
+def get_user_id(email):
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -444,4 +454,4 @@ def get_latest_items(itemLimit):
 if __name__ == '__main__':
     app.secret_key = "super_secret_key"
     app.debug = True
-    app.run(host='0.0.0.0', port=5000, threaded=False)
+    app.run(host='0.0.0.0', port=8000, threaded=False)
