@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 """
 Udacity Full-Stack Web Developer Nanodegree
@@ -6,7 +6,8 @@ Homework 2 : Catalog Items App
 Student: Chin H. Seah
 """
 
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, url_for,\
+    flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from model import Base, Category, CategoryItem, User, CatItem
@@ -19,8 +20,11 @@ import httplib2
 import json
 from flask import make_response
 import requests
+import logging
 
 app = Flask(__name__)
+
+#logging.basicConfig(level=logging.DEBUG)
 
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
@@ -34,6 +38,7 @@ session = DBSession()
 
 categories = session.query(Category).all()
 
+
 @app.route('/')
 @app.route('/catalog')
 def show_catalog():
@@ -42,7 +47,9 @@ def show_catalog():
     """
     numberOfCategories = len(categories)
     latestItems = get_latest_items(numberOfCategories)
-    return render_template('index.html', categories=categories, latestItems=latestItems)
+    return render_template('index.html', categories=categories,
+        latestItems=latestItems)
+
 
 @app.route('/catalog.json')
 def catalog_json():
@@ -54,14 +61,30 @@ def catalog_json():
             cat["Item"] = items
     return jsonify(Category=catalog)
 
+
 @app.route('/catalog/categories.json')
 def catagories_json():
     return jsonify(Category=[c.serialize for c in categories])
 
+
 @app.route('/catalog/<int:category_id>/items.json')
-def catagory_item_json(category_id):
-    catItems = get_category_items(category_id)
-    return jsonify(Item=[ci.serialize for ci in catItems])
+def catagory_items_json(category_id):
+    catItems = [ci.serialize for ci in get_category_items(category_id)]
+    for item in catItems:
+        item["category_id"] = category_id
+    return jsonify(Item=catItems)
+
+
+@app.route('/catalog/<int:category_id>/item/<int:item_id>/item.json')
+def catagory_item_json(category_id, item_id):
+    itemObj = get_category_item(category_id, item_id)
+    if itemObj is None:
+        itemObj = {}
+    else:
+        itemObj = itemObj.serialize
+        itemObj["category_id"] = category_id
+    return jsonify(Item=itemObj)
+
 
 @app.route('/catalog/<category>/items')
 def show_category_items(category):
@@ -85,11 +108,10 @@ def show_category_items(category):
         categoryTotal = "1 item"
     else:
         categoryTotal = "%d items" % (itemsCount)
-    return render_template('index.html',
-                            categoryName=category,
-                            categories=categories,
-                            categoryTotal=categoryTotal,
+    return render_template('index.html', categoryName=category,
+                            categories=categories, categoryTotal=categoryTotal,
                             latestItems=items)
+
 
 @app.route('/catalog/<category>/<item>')
 def show_category_item(category, item):
@@ -105,18 +127,20 @@ def show_category_item(category, item):
         itemId = get_item_id(catId, item)
         if itemId is None:
             flash("Item %s not found!" % (item))
-            itemObj = CategoryItem(name=item,description="Unknown.")
+            itemObj = CategoryItem(name=item, description="Unknown.")
         else:
-            itemObj = get_category_item(itemId)
+            itemObj = get_category_item(catId, itemId)
             # If user was original creator then authorized to edit or delete
-            if 'username' in login_session and login_session['user_id'] == itemObj.user_id:
+            if 'username' in login_session and \
+                login_session['user_id'] == itemObj.user_id:
                 authorized = True
     return render_template('itemdetails.html',
                             categoryName=category,
                             item=itemObj,
                             authorized=authorized)
 
-@app.route('/catalog/<category>/<item>/delete', methods=['GET','POST'])
+
+@app.route('/catalog/<category>/<item>/delete', methods=['GET', 'POST'])
 def delete_category_item(category, item):
     """
     Delete a category item
@@ -134,20 +158,24 @@ def delete_category_item(category, item):
             flash("Item %s not found!" % (item))
             return redirect(url_for('show_catalog'))
         else:
-            itemToDelete = get_category_item(itemId)
+            itemToDelete = get_category_item(catId, itemId)
             if itemToDelete.user_id != login_session['user_id']:
                 return "<script>function myFunction() \
-                        {alert('You are not authorized to delete this item. Please select your own item to delete.');}\
+                        {alert('You are not authorized to delete this item. \
+                        Please select your own item to delete.');}\
                         </script><body onload='myFunction()'>"
             if request.method == 'POST':
                 session.delete(itemToDelete)
                 flash('%s Successfully Deleted' % itemToDelete.name)
                 session.commit()
-                return redirect(url_for('show_category_items', category=category))
+                return redirect(url_for('show_category_items',
+                                        category=category))
             else:
-                return render_template('itemdelete.html', categoryName=category, item=itemToDelete)
+                return render_template('itemdelete.html', categoryName=category,
+                                        item=itemToDelete)
 
-@app.route('/catalog/new', methods=['GET','POST'])
+
+@app.route('/catalog/new', methods=['GET', 'POST'])
 def new_category_item():
     """
     Create a new category item into Catalog
@@ -160,7 +188,8 @@ def new_category_item():
             description=request.form['description'],
             user_id=login_session['user_id'],
             category_id=request.form['category'])
-        #print("New Item: %s %s %s %s"%(newItem.name, newItem.description, str(newItem.user_id), str(newItem.category_id)))
+        logging.debug("New Item: %s %s %s %s", newItem.name,
+            newItem.description, str(newItem.user_id), str(newItem.category_id))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
@@ -168,7 +197,8 @@ def new_category_item():
     else:
         return render_template('newitem.html', categories=categories)
 
-@app.route('/catalog/<category>/items/new', methods=['GET','POST'])
+
+@app.route('/catalog/<category>/items/new', methods=['GET', 'POST'])
 def add_category_item(category):
     """
     Add a new category item into Catalog
@@ -182,7 +212,8 @@ def add_category_item(category):
             description=request.form['description'],
             user_id=login_session['user_id'],
             category_id=catId)
-        #print("New Item: %s %s %s %s"%(newItem.name, newItem.description, str(newItem.user_id), str(newItem.category_id)))
+        logging.debug("New Item: %s %s %s %s", newItem.name,
+            newItem.description, str(newItem.user_id), str(newItem.category_id))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
@@ -192,7 +223,8 @@ def add_category_item(category):
                                 categoryName=category,
                                 categories=categories)
 
-@app.route('/catalog/<category>/<item>/edit', methods=['GET','POST'])
+
+@app.route('/catalog/<category>/<item>/edit', methods=['GET', 'POST'])
 def edit_category_item(category, item):
     """
     Edit a category item
@@ -210,16 +242,19 @@ def edit_category_item(category, item):
             flash("Item %s not found!" % (item))
             return redirect(url_for('show_category_items', category=category))
         else:
-            itemToEdit = get_category_item(itemId)
+            itemToEdit = get_category_item(catId, itemId)
             if itemToEdit.user_id != login_session['user_id']:
                 return "<script>function myFunction() \
-                        {alert('You are not authorized to edit this item. Please select your own item to edit.');}\
+                        {alert('You are not authorized to edit this item. \
+                        Please select your own item to edit.');}\
                         </script><body onload='myFunction()'>"
             if request.method == 'POST':
-                itemToEdit.name=request.form['name']
-                itemToEdit.description=request.form['description']
-                itemToEdit.category_id=request.form['category']
-                print("itemToEdit %s %s %s %s"%(itemToEdit.name, itemToEdit.description, str(itemToEdit.user_id), str(itemToEdit.category_id)))
+                itemToEdit.name = request.form['name']
+                itemToEdit.description = request.form['description']
+                itemToEdit.category_id = request.form['category']
+                logging.debug("itemToEdit %s %s %s %s", itemToEdit.name,
+                    itemToEdit.description, str(itemToEdit.user_id),
+                    str(itemToEdit.category_id))
                 session.add(itemToEdit)
                 session.commit()
                 flash('Item Successfully Edited.')
@@ -232,6 +267,7 @@ def edit_category_item(category, item):
                                         categories=categories,
                                         item=itemToEdit)
 
+
 @app.route('/login')
 def showLogin():
     """
@@ -240,14 +276,15 @@ def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    print("Login session state %s"%(state))
-    return render_template('login.html', STATE=state)
+    logging.debug("Login session state %s", state)
+    return render_template('login.html', STATE = state)
+
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
     if request.args.get('state') != login_session['state']:
-        print("State not equal")
+        logging.debug("State not equal")
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -285,11 +322,11 @@ def gconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    print("Verify that the access token is valid for this app.")
+    # Verify that the access token is valid for this app.
     if result['issued_to'] != CLIENT_ID:
         response = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
+        logging.debug("Token's client ID does not match app's.")
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -305,7 +342,7 @@ def gconnect():
     login_session['access_token'] = credentials.access_token
     login_session['google_id'] = google_id
 
-    print("Get user info")
+    # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
     params = {'access_token': credentials.access_token, 'alt': 'json'}
     answer = requests.get(userinfo_url, params=params)
@@ -330,9 +367,10 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;border-radius: \
+        150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
-    print "done!"
+    logging.info("done!")
     return output
 
 # User Helper Functions
@@ -357,6 +395,7 @@ def get_user_id(email):
     except:
         return None
 
+
 # DISCONNECT - Revoke a current user's token and reset their login_session
 @app.route('/gdisconnect')
 def gdisconnect():
@@ -375,7 +414,8 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response = make_response(\
+            json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -410,6 +450,7 @@ def get_category_id(name):
         return None
     return cat.id
 
+
 def get_category_items(categoryId):
     """
     Get category items by its identifier.
@@ -418,20 +459,25 @@ def get_category_items(categoryId):
         filter_by(category_id = categoryId).\
         order_by(CategoryItem.name).all()
 
-def get_category_item(itemId):
+
+def get_category_item(categoryId, itemId):
     """
     Get category item by its identifier.
     """
-    return session.query(CategoryItem).filter_by(id = itemId).first()
+    return session.query(CategoryItem).filter_by(id = itemId).\
+            filter_by(category_id = categoryId).first()
+
 
 def get_item_id(categoryId, name):
     """
     Get item identifier by its name.
     """
-    item = session.query(CategoryItem).filter_by(name = name).filter_by(category_id = categoryId).first()
+    item = session.query(CategoryItem).filter_by(name = name).\
+            filter_by(category_id = categoryId).first()
     if item is None:
         return None
     return item.id
+
 
 def get_latest_items(itemLimit):
     """
@@ -450,6 +496,7 @@ def get_latest_items(itemLimit):
     #for i in items:
     #    print(i)
     return items
+
 
 if __name__ == '__main__':
     app.secret_key = "super_secret_key"
