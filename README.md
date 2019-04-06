@@ -28,21 +28,38 @@ Udacity Full Stack Web Developer Project to build an app for maintaining items f
   * Open web browser and use web address localhost:8000
   * Login using your Google account
   
-## API End Points
+## Usage
+Home Screen: 'localhost:8000'
+![Catalog App](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App.png)
+
+Category Items: 'localhost:8000/catalog/Snowboarding/items'
+![Catalog App Category Items](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Category%20Items.png)
+
+New Item Screen: 'localhost:8000/catalog/new'
+![Catalog App New Item](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20New%20Item.png)
+
+Item Description: 'localhost:8000/catalog/Snowboarding/Stretchy%20Pants'
+![Catalog App Item Details](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Item%20Details.png)
+
+### API End Points
 1. localhost:8000/catalog.json
 2. localhost:8000/categories.json
 3. localhost:8000/5/items.json - where 5 is category identifier
 
-## Example Screens
-![Catalog App](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App.png)
-|[Catalog App Category Items](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Category%20Items.png)
-![Catalog App New Item](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20New%20Item.png)
-![Catalog App Item Details](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Item%20Details.png)
-
 ## Dependencies
-* Python 2.7
+Below is also listed in requirements.txt. 
+   **Use pip install  -r  requirements.txt**
+* Python 3
 * VirtualBox 5.1
-* Vagrant
-* sqlLite
-* sqlAlchemy
-* Flask
+* Vagrant 2.2.4
+* Flask 1.0.2
+* Flask-HTTPAuth 3.2.4
+* Flask-SQLAlchemy 2.3.2
+* google-api-python-client 1.7.8
+* google-auth 1.6.3
+* google-auth-httplib2 0.0.3
+* httplib2 0.12.1
+* Jinja2 2.10
+* oauth2client 4.1.3
+* requests 2.21.0
+* SQLAlchemy 1.3.1
