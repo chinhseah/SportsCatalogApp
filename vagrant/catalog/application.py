@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env/python3
 
 """
 Udacity Full-Stack Web Developer Nanodegree
@@ -24,7 +24,7 @@ import logging
 
 app = Flask(__name__)
 
-#logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
@@ -47,8 +47,9 @@ def show_catalog():
     """
     numberOfCategories = len(categories)
     latestItems = get_latest_items(numberOfCategories)
-    return render_template('index.html', categories=categories,
-        latestItems=latestItems)
+    return render_template('index.html',
+                           categories=categories,
+                           latestItems=latestItems)
 
 
 @app.route('/catalog.json')
@@ -109,8 +110,9 @@ def show_category_items(category):
     else:
         categoryTotal = "%d items" % (itemsCount)
     return render_template('index.html', categoryName=category,
-                            categories=categories, categoryTotal=categoryTotal,
-                            latestItems=items)
+                           categories=categories,
+                           categoryTotal=categoryTotal,
+                           latestItems=items)
 
 
 @app.route('/catalog/<category>/<item>')
@@ -132,12 +134,12 @@ def show_category_item(category, item):
             itemObj = get_category_item(catId, itemId)
             # If user was original creator then authorized to edit or delete
             if 'username' in login_session and \
-                login_session['user_id'] == itemObj.user_id:
+               login_session['user_id'] == itemObj.user_id:
                 authorized = True
     return render_template('itemdetails.html',
-                            categoryName=category,
-                            item=itemObj,
-                            authorized=authorized)
+                           categoryName=category,
+                           item=itemObj,
+                           authorized=authorized)
 
 
 @app.route('/catalog/<category>/<item>/delete', methods=['GET', 'POST'])
@@ -171,8 +173,9 @@ def delete_category_item(category, item):
                 return redirect(url_for('show_category_items',
                                         category=category))
             else:
-                return render_template('itemdelete.html', categoryName=category,
-                                        item=itemToDelete)
+                return render_template('itemdelete.html',
+                                       categoryName=category,
+                                       item=itemToDelete)
 
 
 @app.route('/catalog/new', methods=['GET', 'POST'])
@@ -189,7 +192,8 @@ def new_category_item():
             user_id=login_session['user_id'],
             category_id=request.form['category'])
         logging.debug("New Item: %s %s %s %s", newItem.name,
-            newItem.description, str(newItem.user_id), str(newItem.category_id))
+                      newItem.description, str(newItem.user_id),
+                      str(newItem.category_id))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
@@ -213,15 +217,16 @@ def add_category_item(category):
             user_id=login_session['user_id'],
             category_id=catId)
         logging.debug("New Item: %s %s %s %s", newItem.name,
-            newItem.description, str(newItem.user_id), str(newItem.category_id))
+                      newItem.description, str(newItem.user_id),
+                      str(newItem.category_id))
         session.add(newItem)
         flash('New Item %s Successfully Added.' % newItem.name)
         session.commit()
         return redirect(url_for('show_category_items', category=category))
     else:
         return render_template('newcategoryitem.html',
-                                categoryName=category,
-                                categories=categories)
+                               categoryName=category,
+                               categories=categories)
 
 
 @app.route('/catalog/<category>/<item>/edit', methods=['GET', 'POST'])
@@ -253,19 +258,20 @@ def edit_category_item(category, item):
                 itemToEdit.description = request.form['description']
                 itemToEdit.category_id = request.form['category']
                 logging.debug("itemToEdit %s %s %s %s", itemToEdit.name,
-                    itemToEdit.description, str(itemToEdit.user_id),
-                    str(itemToEdit.category_id))
+                              itemToEdit.description, str(itemToEdit.user_id),
+                              str(itemToEdit.category_id))
                 session.add(itemToEdit)
                 session.commit()
                 flash('Item Successfully Edited.')
                 if itemToEdit.category_id != catId:
                     flash('Item Category Changed.')
-                return redirect(url_for('show_category_items', category=category))
+                return redirect(url_for('show_category_items',
+                                category=category))
             else:
                 return render_template('edititem.html',
-                                        categoryName=category,
-                                        categories=categories,
-                                        item=itemToEdit)
+                                       categoryName=category,
+                                       categories=categories,
+                                       item=itemToEdit)
 
 
 @app.route('/login')
@@ -277,7 +283,7 @@ def showLogin():
                     for x in xrange(32))
     login_session['state'] = state
     logging.debug("Login session state %s", state)
-    return render_template('login.html', STATE = state)
+    return render_template('login.html', STATE=state)
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -333,8 +339,9 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_google_id = login_session.get('google_id')
     if stored_access_token is not None and google_id == stored_google_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(
+                    json.dumps('Current user is already connected.'),
+                    200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -372,6 +379,7 @@ def gconnect():
     flash("you are now logged in as %s" % login_session['username'])
     logging.info("done!")
     return output
+
 
 # User Helper Functions
 def create_user(login_session):
@@ -414,7 +422,7 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     else:
-        response = make_response(\
+        response = make_response(
             json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -441,11 +449,12 @@ def disconnect():
         flash("You were not logged in")
         return redirect(url_for('show_catalog'))
 
+
 def get_category_id(name):
     """
     Get category identifier by its name.
     """
-    cat = session.query(Category).filter_by(name = name).first()
+    cat = session.query(Category).filter_by(name=name).first()
     if cat is None:
         return None
     return cat.id
@@ -456,7 +465,7 @@ def get_category_items(categoryId):
     Get category items by its identifier.
     """
     return session.query(CategoryItem).\
-        filter_by(category_id = categoryId).\
+        filter_by(category_id=categoryId).\
         order_by(CategoryItem.name).all()
 
 
@@ -464,16 +473,16 @@ def get_category_item(categoryId, itemId):
     """
     Get category item by its identifier.
     """
-    return session.query(CategoryItem).filter_by(id = itemId).\
-            filter_by(category_id = categoryId).first()
+    return session.query(CategoryItem).filter_by(id=itemId).\
+        filter_by(category_id=categoryId).first()
 
 
 def get_item_id(categoryId, name):
     """
     Get item identifier by its name.
     """
-    item = session.query(CategoryItem).filter_by(name = name).\
-            filter_by(category_id = categoryId).first()
+    item = session.query(CategoryItem).filter_by(name=name).\
+        filter_by(category_id=categoryId).first()
     if item is None:
         return None
     return item.id
@@ -487,13 +496,13 @@ def get_latest_items(itemLimit):
     items = []
 
     for c, ci in session.query(Category, CategoryItem).\
-        filter(Category.id == CategoryItem.category_id).\
-        order_by(CategoryItem.create_date.desc())[0:itemLimit]:
+            filter(Category.id == CategoryItem.category_id).\
+            order_by(CategoryItem.create_date.desc())[0:itemLimit]:
         newItem = CatItem(ci.id, c.name, ci.name)
         items.append(newItem)
 
     # for debugging
-    #for i in items:
+    # for i in items:
     #    print(i)
     return items
 

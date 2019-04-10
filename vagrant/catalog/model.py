@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env/python3
 
 import os
 import sys
@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from datetime import datetime
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -26,6 +27,7 @@ class User(Base):
             'id': self.id,
         }
 
+
 class Category(Base):
     __tablename__ = 'category'
 
@@ -40,6 +42,7 @@ class Category(Base):
             'category_id': self.id,
         }
 
+
 class CategoryItem(Base):
     __tablename__ = 'category_item'
 
@@ -49,8 +52,9 @@ class CategoryItem(Base):
     user_id = Column(Integer, ForeignKey('user.id'), default=1)
     category_id = Column(Integer, ForeignKey('category.id'), default=1)
     create_date = Column(DateTime, nullable=False, default=datetime.utcnow)
-    category = relationship(Category)
+    category = relationship(Category, cascade="all")
     user = relationship(User)
+
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -60,6 +64,7 @@ class CategoryItem(Base):
             'description': self.description,
         }
 
+
 class CatItem():
     def __init__(self, id, category, item):
         self.id = id
@@ -67,7 +72,8 @@ class CatItem():
         self.item = item
 
     def __str__(self):
-        return "Id: %s Category: %s Name: %s" % (self.id, self.category, self.item)
+        return "Id: %s Category: %s Name: %s" % (self.id,
+                                                 self.category, self.item)
 
     @property
     def serialize(self):
