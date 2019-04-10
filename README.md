@@ -42,9 +42,10 @@ Item Description: 'localhost:8000/catalog/Snowboarding/Stretchy%20Pants'
 ![Catalog App Item Details](https://github.com/chinhseah/SportsCatalogApp/blob/master/vagrant/catalog/images/Catalog%20App%20-%20Item%20Details.png)
 
 ### API End Points
-1. localhost:8000/catalog.json
-2. localhost:8000/categories.json
-3. localhost:8000/5/items.json - where 5 is category identifier
+- localhost:8000/catalog.json
+- localhost:8000/categories.json
+- localhost:8000/5/items.json - where 5 is category identifier
+- localhost:8000/5/item/1/item.json - where 5 is category identifier and 1 is item identifier
 
 ## Dependencies
 Below is also listed in requirements.txt. 
