@@ -286,6 +286,29 @@ def showLogin():
     return render_template('login.html', STATE=state)
 
 
+@app.route('/login/email', methods=['GET', 'POST'])
+def email_login():
+    if request.method == 'POST':
+        emailAddr = request.form['email']
+        # see if user exists
+        user_id = get_user_id(emailAddr)
+        if user_id:
+            user = get_user_info(user_id)
+            login_session['user_id'] = user_id
+            login_session['username'] = user.name
+            login_session['picture'] = user.picture
+            login_session['email'] = user.email
+            # ADD PROVIDER TO LOGIN SESSION
+            login_session['provider'] = 'user'
+            flash("you are now logged in as %s" % login_session['username'])
+            return redirect(url_for('show_catalog'))
+        else:
+            flash('registered email %s not found!'%emailAddr)
+            return redirect(url_for('show_catalog'))
+    else:
+        return render_template('login.html')
+
+
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token

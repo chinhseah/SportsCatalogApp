@@ -57,7 +57,24 @@
     <div class="row">
       <div class="col-md-12">
         <div class="content-section">
-          <h2>Please Sign In With:</h2>
+          <h2>Please Sign In:</h2>
+          <form class="needs-validation" validate action='{{url_for('email_login')}}' method="post">
+      			<div class="form-group">
+              <label for="email">Registered Email</label>
+              <input class="form-control" id="email" name="email" type="email" placeholder="name@example.com" required>
+      				<div class="invalid-feedback">
+                Please provide registered email address.
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="submit">
+            <span class="glyphicon glyphicon-glass" aria-hidden="true"></span>Login</button>
+            <a href = '{{url_for('show_catalog')}}'>
+          		<button class="btn btn-default delete" type="button">
+          		<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>Cancel</button>
+          	</a>
+          </form>
+          <hr>
+          <h3>Or Sign In With:</h3>
           <div class="auth-provider">
             Google: &nbsp;&nbsp;
             <button class="g-signin2" id="signinButton">Sign in with Google</button>
@@ -68,10 +85,28 @@
     </div>
   </main>
 
-  <!-- Optional JavaScript -->
+<!-- Optional JavaScript -->
 
-<!-- GOOGLE SIGN IN-->
 <script>
+$( "#needs-validation" ).submit(function( event ) {
+     if (this.checkValidity() === false) {
+        event.preventDefault();
+        event.stopPropagation();
+     }
+     this.classList.add('was-validated');
+  });
+
+  // Email validation.
+  $( "#email" ).change(function() {
+     var email = $(this);
+     if (email.is(':invalid')) {
+        email.removeClass('is-valid').addClass('is-invalid');
+        email.siblings(".invalid-feedback").text(email.prop("validationMessage"))
+     } else {
+        email.removeClass('is-invalid').addClass('is-valid');
+     }
+  });
+  <!-- GOOGLE SIGN IN-->
   $('#signinButton').click(function() {
     function signInCallback(authResult){
       if (authResult['code']){
@@ -101,9 +136,9 @@
     }
     auth2.grantOfflineAccess({'redirect_uri': 'postmessage'}).then(signInCallback);
   });
+  <!--END GOOGLE SIGN IN -->
 </script>
 
-<!--END GOOGLE SIGN IN -->
 </body>
 
 </html>
